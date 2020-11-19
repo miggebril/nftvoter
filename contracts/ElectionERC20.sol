@@ -1,14 +1,29 @@
+
+//unused
 pragma solidity ^0.7.4;
 
 contract ElectionERC20 {
 
-    address electionAuthority;
+    
     uint electionEndTime;
     string[] public candidates;
 
     mapping (string => uint) votes; // voter id to number of votes
     mapping (address => bool) voters; // voter's registration status
     mapping (address => bool) hasVoted; // has voted
+
+    struct Voter {
+        uint delegateWeight; // delegateWeight is accumulated by delegation
+        bool voteSpent;  // if true, that person already used their vote
+        address delegateTo; // the person that the voter chooses to delegate their vote to instead of voting themselves
+        uint voteIndex;   // index of the proposal that was voted for
+    }
+
+    // This is a type for a single proposal.
+    struct Proposal {
+        bytes32 proposalName;   // short name for the proposal (up to 32 bytes)
+        uint voteCount; // the number of votes accumulated
+    }
 
     uint256 public yesTransfer;
     uint256 public noTransfer;
@@ -25,8 +40,10 @@ contract ElectionERC20 {
         address voterAddress;
     }
 
+    address electionAuthority;
     constructor() public {
         electionAuthority = msg.sender;
+        voters[electionAuthority].weight = 1;
     }
 
     // custom access modifiers
@@ -104,27 +121,38 @@ contract ElectionERC20 {
         return shouldTransfer;
     }
 
-    function voteYesTransfer() public returns(uint){
+    function voteYesTransfer() public returns(uint)
+    {
         //require(block.timestamp < voteEnd);
         yesTransfer = yesTransfer + 1;
         return yesTransfer;
     }
-     function voteNoTransfer() public returns(uint){
+
+     function voteNoTransfer() public returns(uint)
+     {
         //require(block.timestamp < voteEnd);
         noTransfer = noTransfer + 1;
         return noTransfer;
     }
-    function checkYesTransfer() public view returns(uint){
+
+    function checkYesTransfer() public view returns(uint)
+    {
         return yesTransfer;
     }
-    modifier voteApproved() {
+
+    modifier voteApproved()
+    {
         bool approveTransfer;
-        if(decideToTransfer() == true){
+        if(decideToTransfer() == true)
+        {
             approveTransfer = true;
         }
+
         require(approveTransfer == true);
         _;
     }
-    function transfer() public voteApproved view returns(uint) {
+
+    function transfer() public voteApproved view returns(uint)
+    {
         return(1);
     }
